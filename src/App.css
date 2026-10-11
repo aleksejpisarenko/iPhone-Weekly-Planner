@@ -1,0 +1,871 @@
+/* ================================================================
+   Weekly Planner — book spread
+   Palette: bottle-green cloth cover, cool off-white paper,
+   pale-blue ruling, blue-black ink, plum for weekends,
+   ochre silk ribbon.
+   ================================================================ */
+
+:root {
+  --desk: #1b2523;
+  --cover: #1f3b34;
+  --cover-dark: #162b26;
+  --paper: #fbfaf6;
+  --paper-edge: #e8e6dc;
+  --rule: #d6e0ea;
+  --ink: #1e2a3a;
+  --ink-soft: #6b7684;
+  --pen: #2b4c9b;
+  --weekend: #8a3e5c;
+  --weekend-wash: rgba(138, 62, 92, 0.05);
+  --ribbon: #c8962e;
+  --press: rgba(43, 76, 155, 0.08);
+
+  --serif: "Iowan Old Style", "Palatino", "Book Antiqua", Georgia, serif;
+  --hand: "Noteworthy", "Bradley Hand", "Segoe Print", cursive;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  --flip-ms: 750ms;
+  --line-h: 22px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--desk);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ribbon);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- */
+/*  Shell                                                            */
+/* ---------------------------------------------------------------- */
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + 10px) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  background:
+    radial-gradient(120% 80% at 50% 30%, #24322f 0%, var(--desk) 70%);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ---------------------------------------------------------------- */
+/*  Top bar: week navigation + selected range                        */
+/* ---------------------------------------------------------------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 14px 2px;
+  color: #eef1ec;
+}
+
+.nav-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  transition: background 0.15s;
+}
+
+.nav-btn:active {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.week-label {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.week-label__range {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.week-label__sub {
+  margin-top: 1px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 13px;
+  color: rgba(238, 241, 236, 0.6);
+}
+
+/* Invisible native picker covering the label */
+.week-label__picker {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  font-size: 16px;
+  border: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.subbar {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.today-btn {
+  border: 1px solid rgba(200, 150, 46, 0.55);
+  background: rgba(200, 150, 46, 0.12);
+  color: #e8c477;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 999px;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.today-btn--hidden {
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- */
+/*  Desk & book                                                      */
+/* ---------------------------------------------------------------- */
+
+.desk {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px 14px;
+  touch-action: pan-y;
+}
+
+.book {
+  width: 100%;
+  height: 100%;
+  max-width: 1000px;
+  max-height: 760px;
+  padding: 7px;
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 4px),
+    linear-gradient(160deg, var(--cover), var(--cover-dark));
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.spread {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  -webkit-perspective: 2200px;
+  perspective: 2200px;
+}
+
+.page {
+  position: relative;
+  flex: 1 1 0;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--paper);
+}
+
+/* Gutter shading toward the spine */
+.page--left {
+  border-radius: 6px 1px 1px 6px;
+  background-image: linear-gradient(to right, transparent 82%, rgba(30, 42, 58, 0.09) 100%);
+  box-shadow: inset 1px 0 0 var(--paper-edge);
+}
+
+.page--right {
+  border-radius: 1px 6px 6px 1px;
+  background-image: linear-gradient(to left, transparent 82%, rgba(30, 42, 58, 0.09) 100%);
+  box-shadow: inset -1px 0 0 var(--paper-edge);
+}
+
+.spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: rgba(30, 42, 58, 0.22);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Silk bookmark ribbon hanging from the spine */
+.ribbon {
+  position: absolute;
+  top: -7px;
+  left: calc(50% + 6px);
+  width: 12px;
+  height: 64px;
+  z-index: 6;
+  pointer-events: none;
+  background: linear-gradient(to right, #b5841f, var(--ribbon) 45%, #ad7d1c);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 84%, 0 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------------------------------------------------------------- */
+/*  Page content                                                     */
+/* ---------------------------------------------------------------- */
+
+.page-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 10px 4px;
+}
+
+.page-inner--left {
+  padding-right: 14px;
+}
+
+.page-inner--right {
+  padding-left: 14px;
+}
+
+.page__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 2px 6px;
+  border-bottom: 2px solid var(--ink);
+  font-family: var(--serif);
+}
+
+.page__title {
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.page__meta {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* Left page: 3 × flex 2 = 6 units.
+   Right page: 2 × flex 2 + 2 × flex 1 = 6 units.
+   So weekdays line up across the spread and weekends are exactly half. */
+.page__days {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.day {
+  position: relative;
+  flex: 2 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 3px 2px;
+  border-bottom: 1px solid rgba(30, 42, 58, 0.35);
+  overflow: hidden;
+  cursor: pointer;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--line-h) - 1px),
+    var(--rule) calc(var(--line-h) - 1px),
+    var(--rule) var(--line-h)
+  );
+  background-position: 0 29px;
+  transition: background-color 0.15s;
+}
+
+.day:last-child {
+  border-bottom: none;
+}
+
+.day:active {
+  background-color: var(--press);
+}
+
+.day--weekend {
+  flex: 1 1 0;
+  background-color: var(--weekend-wash);
+}
+
+.day__head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 22px;
+}
+
+.day__num {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+}
+
+.day__name {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.day--weekend .day__num {
+  font-size: 18px;
+  color: var(--weekend);
+}
+
+.day--weekend .day__name {
+  color: var(--weekend);
+  opacity: 0.8;
+}
+
+.day--today .day__num {
+  position: relative;
+  color: var(--paper);
+  z-index: 0;
+}
+
+/* Hand-drawn style circle behind today's date */
+.day--today .day__num::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -4px -6px -5px -6px;
+  border-radius: 48% 52% 46% 54%;
+  background: var(--pen);
+  transform: rotate(-4deg);
+}
+
+.day__count {
+  margin-left: auto;
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: rgba(30, 42, 58, 0.08);
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+  align-self: center;
+}
+
+.day__notes {
+  list-style: none;
+  margin: 3px 0 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, #000 78%, transparent);
+}
+
+.note {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--hand);
+  font-size: 14px;
+  line-height: var(--line-h);
+  color: var(--pen);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.note__time {
+  flex-shrink: 0;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.note__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note--done .note__text {
+  text-decoration: line-through;
+  text-decoration-color: rgba(43, 76, 155, 0.6);
+  opacity: 0.5;
+}
+
+.page__folio {
+  padding-top: 3px;
+  font-family: var(--serif);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.page__folio--left {
+  text-align: left;
+}
+
+.page__folio--right {
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------- */
+/*  Page flip                                                        */
+/* ---------------------------------------------------------------- */
+
+.leaf {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  z-index: 5;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.leaf--next {
+  left: 50%;
+  transform-origin: left center;
+  animation: flip-next var(--flip-ms) cubic-bezier(0.45, 0.05, 0.3, 1) forwards;
+}
+
+.leaf--prev {
+  left: 0;
+  transform-origin: right center;
+  animation: flip-prev var(--flip-ms) cubic-bezier(0.45, 0.05, 0.3, 1) forwards;
+}
+
+@keyframes flip-next {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(-180deg); }
+}
+
+@keyframes flip-prev {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(180deg); }
+}
+
+/* Faces reuse .page styles but fill the leaf */
+.leaf .leaf__face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.leaf .leaf__back {
+  transform: rotateY(180deg);
+}
+
+/* Shading: front darkens as it lifts, back lightens as it lands */
+.leaf__face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(20, 30, 40, 0.3);
+  opacity: 0;
+}
+
+.leaf__front::after {
+  animation: shade-front var(--flip-ms) ease forwards;
+}
+
+.leaf__back::after {
+  animation: shade-back var(--flip-ms) ease forwards;
+}
+
+@keyframes shade-front {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+@keyframes shade-back {
+  0%   { opacity: 1; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---------------------------------------------------------------- */
+/*  Day sheet (CRUD)                                                 */
+/* ---------------------------------------------------------------- */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(10, 16, 15, 0.5);
+  animation: fade-in 0.2s ease;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 88%;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 18px calc(16px + var(--safe-bottom));
+  border-radius: 20px 20px 0 0;
+  background: var(--paper);
+  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.3);
+  animation: slide-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.sheet__grabber {
+  width: 36px;
+  height: 5px;
+  margin: 0 auto 12px;
+  border-radius: 3px;
+  background: rgba(30, 42, 58, 0.18);
+}
+
+.sheet__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.sheet__weekday {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+
+.sheet__title {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.sheet__done {
+  border: none;
+  background: none;
+  padding: 6px 0;
+  color: var(--pen);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.sheet__empty {
+  margin: 0;
+  padding: 26px 0;
+  text-align: center;
+  font-family: var(--hand);
+  font-size: 16px;
+  color: var(--ink-soft);
+}
+
+.sheet__list {
+  list-style: none;
+  margin: 6px 0 12px;
+  padding: 0;
+  flex: 1;
+  min-height: 60px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--rule);
+  transition: background-color 0.15s;
+}
+
+.entry--editing {
+  border-radius: 10px;
+  background: var(--press);
+}
+
+.entry__check {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid var(--ink-soft);
+  border-radius: 50%;
+  background: none;
+  color: #fff;
+}
+
+.entry__check--on {
+  border-color: var(--pen);
+  background: var(--pen);
+}
+
+.entry__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+}
+
+.entry__time {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.entry__text {
+  font-family: var(--hand);
+  font-size: 17px;
+  line-height: 1.35;
+  color: var(--pen);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.entry--done .entry__text {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.entry__delete {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-soft);
+}
+
+.entry__delete:active {
+  background: rgba(138, 62, 92, 0.12);
+  color: var(--weekend);
+}
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.composer__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.composer__label {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+
+/* iOS renders an empty time input with zero width unless sized */
+.composer__time {
+  min-width: 112px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(30, 42, 58, 0.18);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.composer__clear {
+  border: none;
+  background: none;
+  padding: 6px 4px;
+  color: var(--weekend);
+  font-size: 14px;
+}
+
+.composer__text {
+  width: 100%;
+  min-height: 76px;
+  padding: 10px 12px;
+  border: 1px solid rgba(30, 42, 58, 0.18);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--pen);
+  font-family: var(--hand);
+  font-size: 17px; /* ≥16px prevents iOS zoom on focus */
+  line-height: 1.4;
+  resize: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.composer__text::placeholder {
+  color: rgba(107, 118, 132, 0.7);
+}
+
+.composer__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn {
+  padding: 11px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.btn--primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btn--primary:disabled {
+  opacity: 0.35;
+}
+
+.btn--ghost {
+  background: rgba(30, 42, 58, 0.07);
+  color: var(--ink);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* ---------------------------------------------------------------- */
+/*  Responsive tweaks                                                */
+/* ---------------------------------------------------------------- */
+
+/* Narrow portrait phones: tighten the pages */
+@media (max-width: 430px) {
+  .page-inner {
+    padding: 8px 6px 3px;
+  }
+  .page-inner--left { padding-right: 10px; }
+  .page-inner--right { padding-left: 10px; }
+
+  .page__title { font-size: 15px; }
+  .page__meta { font-size: 12px; }
+
+  .day__num { font-size: 19px; }
+  .day--weekend .day__num { font-size: 16px; }
+  .day__name { font-size: 11px; }
+
+  .note { font-size: 12px; }
+  .note__time { font-size: 9px; }
+
+  .week-label__range { font-size: 17px; }
+}
+
+/* Landscape phones: give the book the height */
+@media (orientation: landscape) and (max-height: 500px) {
+  .topbar { padding-top: 4px; }
+  .nav-btn { width: 36px; height: 36px; }
+  .subbar { height: 26px; }
+  .desk { padding-bottom: 8px; }
+  .sheet { max-height: 96%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --flip-ms: 1ms; }
+  .sheet,
+  .sheet-backdrop {
+    animation: none;
+  }
+}
